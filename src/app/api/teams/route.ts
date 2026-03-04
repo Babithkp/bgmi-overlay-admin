@@ -2,12 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 import { uploadToS3, deleteFromS3, extractS3Key } from "../../../lib/s3";
 
-// 🔴 CRITICAL: Prisma + S3 MUST run in Node
 export const runtime = "nodejs";
 
-// ==============================
-// GET ALL TEAMS (DEBUG ENABLED)
-// ==============================
 export async function GET() {
   try {
     const teams = await prisma.team.findMany({
@@ -31,6 +27,15 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
+    const playerDefaults = [
+      "https://storage.trikonatech.com/dashboard/players/player1.jpeg",
+      "https://storage.trikonatech.com/dashboard/players/player2.jpeg",
+      "https://storage.trikonatech.com/dashboard/players/player3.jpeg",
+      "https://storage.trikonatech.com/dashboard/players/player4.jpeg",
+      "https://storage.trikonatech.com/dashboard/players/player5.jpeg",
+      "https://storage.trikonatech.com/dashboard/players/player6.jpeg",
+    ]
+
     const formData = await req.formData();
     const teamsJson = formData.get("teams") as string;
 
@@ -42,11 +47,11 @@ export async function POST(req: Request) {
     }
 
     const teamsData = JSON.parse(teamsJson);
-    
+
 
     for (const teamData of teamsData) {
-      const { slotNumber, teamName, players, teamColor} = teamData;
-      
+      const { slotNumber, teamName, players, teamColor } = teamData;
+
       const slot = Number(slotNumber);
 
       const existingTeam = await prisma.team.findUnique({
@@ -54,7 +59,6 @@ export async function POST(req: Request) {
         include: { players: true },
       });
 
-      // -------- TEAM IMAGE --------
       let teamImageUrl = existingTeam?.teamImage ?? null;
       const teamImageFile = formData.get(
         `teamImage-${slot}`
@@ -80,7 +84,6 @@ export async function POST(req: Request) {
         }
       }
 
-      // -------- UPSERT TEAM --------
       const team = await prisma.team.upsert({
         where: { slotNumber: slot },
         update: {
@@ -96,14 +99,12 @@ export async function POST(req: Request) {
         },
       });
 
-      // -------- RESET PLAYERS --------
       if (existingTeam) {
         await prisma.player.deleteMany({
           where: { teamId: team.id },
         });
       }
 
-      // -------- CREATE PLAYERS --------
       for (let i = 0; i < 4; i++) {
         const player = players[i] || { playerName: "" };
         let playerImageUrl: string | null = null;
@@ -125,6 +126,9 @@ export async function POST(req: Request) {
             key,
             playerImageFile.type
           );
+        }
+        if (playerImageFile === null) {
+          playerImageUrl = playerDefaults[Math.floor(Math.random() * playerDefaults.length)];
         }
 
         await prisma.player.create({

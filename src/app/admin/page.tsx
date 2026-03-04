@@ -32,7 +32,7 @@ export default function AdminPage() {
     try {
       const res = await fetch("/api/teams");
       const data = await res.json();
-      setTeams(data);
+      setTeams(data);      
     } catch (error) {
       console.error("Failed to fetch teams:", error);
     }
@@ -134,7 +134,7 @@ export default function AdminPage() {
 
   // Create slots array (1-25)
   const slots = Array.from({ length: 25 }, (_, i) => i + 1);
-  const teamsBySlot = teams.reduce((acc, team) => {
+  const teamsBySlot = teams?.reduce((acc, team) => {
     acc[team.slotNumber] = team;
     return acc;
   }, {} as Record<number, Team>);

@@ -15,9 +15,6 @@ export async function PATCH(
 
     const contentType = req.headers.get('content-type') || '';
 
-    // 🔴 IMPORTANT:
-    // This route now ONLY supports multipart/form-data
-    // Slot updates are handled EXCLUSIVELY in /api/teams/swap
     if (!contentType.includes('multipart/form-data')) {
       return NextResponse.json(
         { error: 'Invalid request type' },
@@ -25,7 +22,6 @@ export async function PATCH(
       );
     }
 
-    // ---------- FORM DATA ----------
     const formData = await req.formData();
     const teamColor = formData.get('teamColor') as string | null;
     const teamName = formData.get('teamName') as string | null;
@@ -39,7 +35,6 @@ export async function PATCH(
       return NextResponse.json({ error: 'Team not found' }, { status: 404 });
     }
 
-    // ---------- UPDATE TEAM META ----------
     await prisma.team.update({
       where: { id: teamId },
       data: {
@@ -48,7 +43,6 @@ export async function PATCH(
       },
     });
 
-    // ---------- UPDATE PLAYERS ----------
     for (let i = 0; i < 4; i++) {
       const playerName = formData.get(`playerName-${i}`) as string | null;
       const playerImageFile = formData.get(
@@ -59,7 +53,6 @@ export async function PATCH(
         (p) => p.position === i + 1
       );
 
-      // IMAGE UPDATE
       if (playerImageFile && playerImageFile.size > 0) {
         const buffer = Buffer.from(
           await playerImageFile.arrayBuffer()
