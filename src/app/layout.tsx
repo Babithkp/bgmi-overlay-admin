@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Roboto_Condensed } from "next/font/google";
 import "./globals.css";
+import { ToastContainer } from 'react-toastify';
+
 const robotoCondensed = Roboto_Condensed({
   subsets: ["latin"],
   weight: ["700"],
@@ -20,6 +22,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={robotoCondensed.variable}>
       <body className="antialiased">
+          <ToastContainer />
           {children}
       </body>
     </html>

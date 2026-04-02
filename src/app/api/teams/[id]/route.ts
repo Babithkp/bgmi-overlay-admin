@@ -92,7 +92,7 @@ export async function PATCH(
         }
       }
       // NAME ONLY UPDATE
-      else if (playerName && existingPlayer) {
+      else if (playerName !== null && existingPlayer) {
         await prisma.player.update({
           where: { id: existingPlayer.id },
           data: { playerName },
@@ -123,6 +123,35 @@ export async function PATCH(
     return NextResponse.json(
       { error: 'Invalid request' },
       { status: 400 }
+    );
+  }
+}
+
+export async function GET(req: Request, context: { params: Promise<{ id: string }> }) {
+  try {
+    const teams = await prisma.team.findMany({
+      where: {
+        tournamentId: (await context.params).id,
+      },
+      include: {
+        players: true, tournament: {
+          select: {
+            status: true
+          }
+        }
+      },
+      orderBy: { slotNumber: "asc" },
+    });
+
+    return NextResponse.json(teams);
+  } catch (err) {
+    console.error("API /teams GET ERROR:", err);
+    return NextResponse.json(
+      {
+        error: "Failed to fetch teams",
+        details: String(err),
+      },
+      { status: 500 }
     );
   }
 }

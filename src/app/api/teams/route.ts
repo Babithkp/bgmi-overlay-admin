@@ -4,26 +4,6 @@ import { uploadToS3, deleteFromS3, extractS3Key } from "../../../lib/s3";
 
 export const runtime = "nodejs";
 
-export async function GET() {
-  try {
-    const teams = await prisma.team.findMany({
-      include: { players: true },
-      orderBy: { slotNumber: "asc" },
-    });
-
-    return NextResponse.json(teams);
-  } catch (err) {
-    console.error("API /teams GET ERROR:", err);
-    return NextResponse.json(
-      {
-        error: "Failed to fetch teams",
-        details: String(err),
-      },
-      { status: 500 }
-    );
-  }
-}
-
 
 export async function POST(req: Request) {
   try {
@@ -37,6 +17,7 @@ export async function POST(req: Request) {
     ]
 
     const formData = await req.formData();
+    const tournamentId = formData.get("tournamentId") as string;
     const teamsJson = formData.get("teams") as string;
 
     if (!teamsJson) {
@@ -55,7 +36,7 @@ export async function POST(req: Request) {
       const slot = Number(slotNumber);
 
       const existingTeam = await prisma.team.findUnique({
-        where: { slotNumber: slot },
+        where: { tournamentId, slotNumber: slot },
         include: { players: true },
       });
 
@@ -85,7 +66,7 @@ export async function POST(req: Request) {
       }
 
       const team = await prisma.team.upsert({
-        where: { slotNumber: slot },
+        where: { tournamentId, slotNumber: slot },
         update: {
           teamName,
           teamImage: teamImageUrl ?? undefined,
@@ -96,6 +77,7 @@ export async function POST(req: Request) {
           teamName,
           teamImage: teamImageUrl,
           teamColor,
+          tournamentId
         },
       });
 
@@ -156,6 +138,41 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         error: "Failed try again",
+        details: String(err),
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET() {
+  try {
+    const tournament = await prisma.tournament.findFirst({
+      where: {
+        status: "active"
+      }
+    })
+    if (!tournament) {
+      return NextResponse.json(
+        { error: "No tournaments found" },
+        { status: 404 }
+      );
+    }
+    const teams = await prisma.team.findMany({
+      where: {
+        tournamentId: tournament.id
+      },
+      include: { players: true },
+      orderBy: { slotNumber: "asc" },
+    });
+    console.log(teams);
+
+    return NextResponse.json(teams);
+  } catch (err) {
+    console.error("API /teams GET ERROR:", err);
+    return NextResponse.json(
+      {
+        error: "Failed to fetch teams",
         details: String(err),
       },
       { status: 500 }

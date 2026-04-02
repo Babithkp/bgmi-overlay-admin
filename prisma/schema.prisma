@@ -7,15 +7,24 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Tournament {
+  id             String @id @default(auto()) @map("_id") @db.ObjectId
+  tournamentName String
+  status         String
+  Teams          Team[]
+}
+
 model Team {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  teamName   String
-  slotNumber Int      @unique
-  teamImage  String? 
-  teamColor String?
-  players    Player[]
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id           String      @id @default(auto()) @map("_id") @db.ObjectId
+  teamName     String
+  slotNumber   Int         @unique
+  teamImage    String?
+  teamColor    String?
+  players      Player[]
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  tournament   Tournament? @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  tournamentId String?     @db.ObjectId
 
   @@map("teams")
 }
