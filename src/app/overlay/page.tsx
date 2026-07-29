@@ -347,7 +347,7 @@ useEffect(() => {
                 unoptimized
               />
             </div>
-            <div className={`   text-white top-0 left-17 w-60 h-10 pt-1`}
+            <div className={`   text-white top-0 left-17 w-80 h-10 pt-1`}
               style={{ background: matchDebug.color ?? "black", clipPath: "polygon(0 0, 85% 0, 100% 100%, 0% 100%)", }}
             >
               <p className="text-2xl font-bold w-full ml-3 font-overlay">
