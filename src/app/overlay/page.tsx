@@ -334,8 +334,9 @@ useEffect(() => {
               style={{
                 width: `${uiposion.TeamLogoSize}px`,
                 height: `${uiposion.TeamLogoSize}px`,
+                background: matchDebug.color ?? "black",
+                opacity: 0.8,
               }}
-              className="bg-black/90"
             >
 
               <Image
