@@ -25,6 +25,7 @@ export async function PATCH(
     const formData = await req.formData();
     const teamColor = formData.get('teamColor') as string | null;
     const teamName = formData.get('teamName') as string | null;
+    const teamImageFile = formData.get('teamImage') as File | null;
 
     const team = await prisma.team.findUnique({
       where: { id: teamId },
@@ -35,11 +36,26 @@ export async function PATCH(
       return NextResponse.json({ error: 'Team not found' }, { status: 404 });
     }
 
+    let teamImageUrl: string | null = null;
+    if (teamImageFile && teamImageFile.size > 0) {
+      const buffer = Buffer.from(await teamImageFile.arrayBuffer());
+      const ext = teamImageFile.name.split('.').pop() || 'jpg';
+      const key = `teams/${team.slotNumber}-${Date.now()}.${ext}`;
+
+      teamImageUrl = await uploadToS3(buffer, key, teamImageFile.type);
+
+      if (team.teamImage) {
+        const oldKey = extractS3Key(team.teamImage);
+        if (oldKey) await deleteFromS3(oldKey);
+      }
+    }
+
     await prisma.team.update({
       where: { id: teamId },
       data: {
         ...(teamName ? { teamName } : {}),
         ...(teamColor ? { teamColor } : {}),
+        ...(teamImageUrl ? { teamImage: teamImageUrl } : {}),
       },
     });
 
